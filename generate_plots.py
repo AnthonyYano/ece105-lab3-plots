@@ -8,6 +8,7 @@ pure data generation so the function is easy to test.
 from typing import Tuple
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def generate_data(seed: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -121,4 +122,61 @@ def plot_scatter(ax, timestamps: np.ndarray, sensor_a: np.ndarray, sensor_b: np.
     ax.set_title(title)
     ax.legend()
     ax.grid(True)
+
+def main(seed: int = 2143, out_path: str = 'sensor_analysis.png', dpi: int = 150) -> None:
+    """Generate data, create plots, and save a combined figure.
+
+    The function generates reproducible sensor data using :func:`generate_data`,
+    creates a 1x3 subplot layout, draws a scatter plot, an overlaid histogram,
+    and a box plot for the two sensors, then saves the figure to disk.
+
+    Parameters
+    ----------
+    seed : int, optional
+        Seed passed to :func:`generate_data` to ensure reproducible outputs
+        (default is 2143).
+    out_path : str, optional
+        File path where the combined figure will be saved (default
+        ``'sensor_analysis.png'``).
+    dpi : int, optional
+        Dots-per-inch to use when saving the figure (default 150).
+
+    Returns
+    -------
+    None
+    """
+    # Generate data
+    timestamps, sensor_a, sensor_b = generate_data(seed)
+
+    # Create 1x3 subplot figure
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+    # Scatter plot on axes[0]
+    plot_scatter(axes[0], timestamps, sensor_a, sensor_b)
+
+    # Histogram on axes[1]
+    bins = 20
+    axes[1].hist(sensor_a, bins=bins, alpha=0.7, color='blue', label='Sensor A (n=200)', edgecolor='black')
+    axes[1].hist(sensor_b, bins=bins, alpha=0.5, color='orange', label='Sensor B (n=200)', edgecolor='black')
+    axes[1].set_xlabel('Temperature (°C)')
+    axes[1].set_ylabel('Count')
+    axes[1].set_title('Overlaid histogram')
+    axes[1].legend()
+    axes[1].grid(axis='y', alpha=0.3)
+
+    # Box plot on axes[2]
+    axes[2].boxplot([sensor_a, sensor_b], labels=['Sensor A', 'Sensor B'], notch=True, showmeans=True,
+                    meanprops=dict(marker='D', markeredgecolor='black', markerfacecolor='firebrick'))
+    axes[2].set_ylabel('Temperature (°C)')
+    axes[2].set_title('Box plot')
+    axes[2].grid(axis='y', alpha=0.3)
+
+    # Layout and save
+    plt.tight_layout()
+    fig.savefig(out_path, dpi=dpi, bbox_inches='tight')
+    plt.close(fig)
+
+
+if __name__ == '__main__':
+    main()
 
